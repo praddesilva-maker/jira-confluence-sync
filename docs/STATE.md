@@ -47,9 +47,10 @@ Phase 0 — Repo + docs skeleton + Forge scaffold. DoD: `docs/delivery/phase-pla
 2. **Merge PR #2** (`cr-001/configurable-root`, "CR-001: configurable hierarchy root (docs)")
    after it auto-retargets to `main` once #1 merges — it currently targets `phase-0/scaffold`
    because the docs it edits only existed there.
-3. **Merge PR #3** (`cr-002/deploy-tooling`, "CR-002: deploy tooling + environment config") after
+3. **Merge PR #4** (`cr-002/deploy-tooling`, "CR-002: deploy tooling + environment config") after
    it auto-retargets to `main` once #2 merges — same reason, it branches off `cr-001/configurable-
-   root`.
+   root`. (Numbered #4, not #3 — [issue #3](https://github.com/praddesilva-maker/jira-confluence-sync/issues/3)
+   took that number first.)
 4. **Run Phase 0 manual verification**, either directly or via the new tooling:
    ```bash
    cp deploy.config.example.json deploy.config.json   # fill in your site — see README "Deploying"
