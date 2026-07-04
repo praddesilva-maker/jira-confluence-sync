@@ -21,11 +21,15 @@ we're in, what works, and what the next steps are.
 
 - Forge platform limits: resolvers must return within ~25s (thin: validate/enqueue/read-state
   only); real work happens in queue consumers (`timeoutSeconds: 900`).
-- Node version pinned in `.nvmrc`; TypeScript strict mode everywhere.
+- TypeScript strict mode everywhere in `src/` (app runtime code).
 - `asUser()` for all product (Jira/Confluence) reads and writes; `asApp()` is reserved for internal
   housekeeping only (see ADR-002).
 - No hardcoded issue type names, project keys, space keys, custom field IDs, or cloud IDs —
   everything comes from config or is discovered at runtime (portability, solution-architecture §9).
+- All project tooling/scripts must be Node `.mjs` invoked via `npm run` — never OS-specific shell
+  scripts (`.sh`/`.ps1`/`.bat`). Node version is 22.22.x, enforced by `scripts/check-node.mjs`; do
+  not relax the pin without an ADR. See ADR-005.
+- Never introduce client API tokens or per-client credentials — see ADR-006.
 
 ## Workflow rules
 
