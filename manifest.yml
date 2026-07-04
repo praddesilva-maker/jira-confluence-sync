@@ -8,16 +8,14 @@ modules:
 
   function:
     - key: resolver-func
-      handler: index.handler
+      handler: resolvers/index.handler
 
 resources:
   - key: main
     path: static/review-ui/dist
 
 app:
-  # Placeholder — `forge register` overwrites this with your real app ARI.
-  # Do not deploy with this placeholder; see README "Manual setup" section.
-  id: ari:cloud:ecosystem::app/00000000-0000-0000-0000-000000000000
+  id: ari:cloud:ecosystem::app/22e99fe1-49db-4dbe-980c-27166e29aa85
   runtime:
     name: nodejs22.x
 
