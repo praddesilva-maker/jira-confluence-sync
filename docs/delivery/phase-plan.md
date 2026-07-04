@@ -20,23 +20,24 @@ only when its checklist is fully ticked (`docs/documentation-strategy.md` §5).
 
 - [ ] Manifest scopes added: `read:jira-work`, `read:page:confluence`
 - [ ] `getHierarchyOptions()` resolver: site issue types grouped by hierarchy level
-- [ ] `saveHierarchyMapping()` resolver: validates all four roles mapped to distinct types, persists to `config:global`
-- [ ] `savePair()` resolver: URL→pageId parsing (pretty + `/pages/<id>/`), page existence check, Jira key/type validation, persists to `config:pair:<id>`, typed validation errors (no throws)
+- [ ] `saveHierarchyMapping()` resolver: validates only the roles at/below the pair's `rootLevel` are mapped, each to a distinct type (CR-001, ADR-004), persists to `config:global`
+- [ ] `savePair()` resolver: pair includes `rootLevel` (`initiative | feature | epic`); URL→pageId parsing (pretty + `/pages/<id>/`), page existence check, `jiraRootKey`/type validation against the mapped type for that `rootLevel` (not always "initiative"), persists to `config:pair:<id>`, typed validation errors (no throws)
 - [ ] `listPairs()`, `deletePair()`, `getConfig()` resolvers
-- [ ] `src/domain/model.ts`: `ItemType`, `WorkItem`, locators, `HierarchyMapping`, `InitiativePair` — shared frontend/backend
-- [ ] Config screen UI: Hierarchy Mapping panel (four selects) + Initiative Pairs panel (list/add/delete, inline validation), Atlaskit components
-- [ ] Vitest units: URL→pageId parsing edge cases, mapping validation — `@forge/api` mocked, no real API calls in tests
+- [ ] `src/domain/model.ts`: `ItemType`, `WorkItem`, locators, `HierarchyMapping`, `InitiativePair` (with `rootLevel`) — shared frontend/backend
+- [ ] Config screen UI: Hierarchy Mapping panel (root-level selector + selects only for roles at/below it) + Initiative Pairs panel (list/add — incl. per-pair root-level choice — /delete, inline validation), Atlaskit components
+- [ ] Vitest units: URL→pageId parsing edge cases, mapping validation for all three root levels (`initiative`, `feature`, `epic`), incl. rejecting an out-of-scope role for a given root — `@forge/api` mocked, no real API calls in tests
 - [ ] `docs/design/data-model.md` updated with implemented types + KVS key layout
-- [ ] `docs/STATE.md` updated; this checklist ticked; manual test script added to `docs/delivery/test-notes.md#phase-1`
+- [ ] `docs/STATE.md` updated; this checklist ticked; manual test script added to `docs/delivery/test-notes.md#phase-1`, including an epic-root pair validated on a free-tier site (CR-001)
 
 ## Phase 2 — Read-only extraction: Jira tree + Confluence ADF parse → canonical model
 
-- [ ] Jira adapter: fetch Initiative, traverse children breadth-first via `parent = <KEY>` JQL, paginated
-- [ ] Confluence adapter: resolve page ID, fetch via v2 API (`body-format=atlas_doc_format`), enumerate child pages
-- [ ] ADF parser: `Summary`/`Description` heading convention, Epics table, Stories/Tasks table (incl. `Type` column) → `WorkItem[]` with locators
-- [ ] Combined tree rendered in Custom UI (read-only)
-- [ ] `docs/design/adf-conventions.md` filled in with exact ADF shapes + supported-node allowlist (Q2)
-- [ ] Vitest coverage for both adapters and the ADF parser (fixture-based, no live API calls)
+- [ ] Jira adapter: fetch the pair's root issue (whichever level `rootLevel` names — CR-001, ADR-004), traverse children breadth-first via `parent = <KEY>` JQL, paginated
+- [ ] Confluence adapter: resolve page ID, fetch via v2 API (`body-format=atlas_doc_format`); enumerate child pages only when `rootLevel: initiative` — `feature`/`epic` roots read tables directly off the single root page (§5.2)
+- [ ] ADF parser: `Summary`/`Description` heading convention, Epics table (present only for `initiative`/`feature` roots), Stories/Tasks table (incl. `Type` column) → `WorkItem[]` with locators
+- [ ] Combined tree rendered in Custom UI (read-only), correct for all three root levels
+- [ ] `docs/design/adf-conventions.md` filled in with exact ADF shapes + supported-node allowlist (Q2), including the three per-root page-model variants (CR-001, ADR-004)
+- [ ] Vitest coverage for both adapters and the ADF parser (fixture-based, no live API calls), with fixtures for all three root levels
+- [ ] Extraction verified for all three root modes — **epic mode on the owner's personal/free-tier site is the primary test bed** (CR-001)
 - [ ] `docs/STATE.md` updated; checklist ticked; manual test script for `docs/delivery/test-notes.md#phase-2`
 
 ## Phase 3 — Diff engine + drift report UI (no LLM, no writes) — first genuinely useful release
