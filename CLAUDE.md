@@ -1,8 +1,9 @@
 # CLAUDE.md — standing orders for initiative-sync
 
-Initiative Sync is a Forge app that diffs a Jira Initiative hierarchy against a Confluence page
-tree, proposes LLM-assisted content improvements, and syncs only after human review — a diff/merge
-engine, never an auto-sync bot. Full design: `docs/design/solution-architecture.md`.
+Initiative Sync is a Forge app that diffs a Jira hierarchy — rooted at a configurable level:
+Initiative, Feature, or Epic (CR-001, ADR-004) — against a matching Confluence page tree, proposes
+LLM-assisted content improvements, and syncs only after human review — a diff/merge engine, never
+an auto-sync bot. Full design: `docs/design/solution-architecture.md`.
 
 **Read `docs/STATE.md` before doing anything.** It is the single source of truth for what phase
 we're in, what works, and what the next steps are.
@@ -34,6 +35,8 @@ we're in, what works, and what the next steps are.
   functions, heavily tested).
 - Never touch `docs/adr/` without being asked.
 - Ask before adding scopes to `manifest.yml`.
+- When a change reverses or generalises a design decision, the same PR must sweep the affected doc
+  for now-stale statements — flagging is acceptable only for changes that require code to resolve.
 
 ## Definition of done for any task
 

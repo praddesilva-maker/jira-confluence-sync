@@ -1,8 +1,9 @@
 # Initiative Sync
 
-A Forge app that treats a Jira Initiative hierarchy and a Confluence page tree as two views of one
-plan, detects drift between them, uses an LLM to suggest content improvements, and syncs only
-after human review. See `docs/design/solution-architecture.md` for the full design.
+A Forge app that treats a Jira hierarchy — rooted at a configurable level: Initiative, Feature, or
+Epic (CR-001, ADR-004) — and a matching Confluence page tree as two views of one plan, detects
+drift between them, uses an LLM to suggest content improvements, and syncs only after human
+review. See `docs/design/solution-architecture.md` for the full design.
 
 Status: **Phase 0** (scaffold only — no product scopes, no LLM, no writes). See `docs/STATE.md`.
 
