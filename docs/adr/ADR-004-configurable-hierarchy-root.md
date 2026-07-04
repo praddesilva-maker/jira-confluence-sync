@@ -55,9 +55,12 @@ convention — the row records what changed and why, rather than being deleted.
   operation.
 - **Pair validation** now checks the configured `jiraRootKey`'s issue type against the mapped
   issue type for that pair's `rootLevel`, not always against "Initiative".
-- **Not addressed by this ADR** (flagged, not silently fixed — see the CR-001 PR description):
-  `docs/design/solution-architecture.md` §5.1 (Jira adapter) and §1 (Purpose) still describe the
-  hierarchy as always starting at Initiative; §7 (HIL review board) still shows the drift-card tree
-  as always four levels deep. These read as stale after this ADR but are out of CR-001's explicit
-  scope (docs-only, Confluence adapter + config/domain sections + drift statuses) — worth a
-  follow-up pass, likely alongside the Phase 1/2 implementation work this ADR extends.
+- **Consistency sweep completed in this same PR (originally flagged, not silently fixed, then
+  approved as an in-scope follow-up):** `docs/design/solution-architecture.md` §5.1 (Jira adapter),
+  §1 (Purpose), and §7 (HIL review board) all described the hierarchy as unconditionally starting
+  at Initiative / always four levels deep; all three are now updated to describe the configurable
+  root. The `InitiativePair` working name (`prompts/phase-1-config.md`,
+  `docs/delivery/phase-plan.md`, `docs/design/data-model.md`) was also renamed to `PairConfig` for
+  the same reason — no code existed yet, so nothing required a separate follow-up to resolve. See
+  `CLAUDE.md`'s standing order: a decision-reversing PR must sweep the affected doc for stale
+  statements, and may only flag-instead-of-fix where the fix requires code.
