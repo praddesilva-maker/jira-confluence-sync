@@ -10,11 +10,14 @@ ADR-004, 2026-07-04 (configurable hierarchy root)
 
 ## 1. Purpose
 
-A Forge app that treats a Jira Initiative hierarchy (Initiative → Feature → Epic → Story/Task) and a
-Confluence page tree (Initiative root page → one child page per Feature, containing Epic and
-Story/Task tables) as two representations of the same plan, detects drift between them, uses an LLM
-to propose content improvements, and — after human review — synchronises in the direction the user
-selects per item.
+A Forge app that treats a Jira hierarchy rooted at a configurable level (Initiative, Feature, or
+Epic — CR-001, ADR-004) and a matching Confluence page tree as two representations of the same
+plan, detects drift between them, uses an LLM to propose content improvements, and — after human
+review — synchronises in the direction the user selects per item. In its fullest case (root:
+Initiative) the Jira side is the four-level Initiative → Feature → Epic → Story/Task hierarchy and
+the Confluence side is an Initiative root page with one child page per Feature, each containing
+Epic and Story/Task tables; a Feature- or Epic-rooted pair is the same model starting lower, with a
+single Confluence page in place of a page tree (§5.2).
 
 Core design stance: **the app is a diff/merge engine with a human-in-the-loop gate, not an
 auto-sync bot.** Nothing writes to Jira or Confluence without an explicit user-approved plan.
@@ -115,8 +118,12 @@ interface ConfluenceLocator{ source: 'confluence'; pageId: string; pageVersion: 
 ## 5. Adapters
 
 ### 5.1 Jira adapter (read)
-1. Fetch the Initiative issue by key; validate its issue type maps to the "initiative" level (see §9 portability).
-2. Traverse children breadth-first with JQL `parent = <KEY>` per level (paginated, `/rest/api/3/search/jql`).
+1. Fetch the root issue (`jiraRootKey`) by key; validate its issue type matches the mapped
+   `rootLevel` type for that pair (initiative, feature, or epic — CR-001, ADR-004; see §9
+   portability).
+2. Traverse children breadth-first with JQL `parent = <KEY>` per level (paginated,
+   `/rest/api/3/search/jql`), starting from whichever level the root is — the traversal logic
+   itself is unchanged by CR-001, it just starts lower for `feature`/`epic`-root pairs.
 3. Pull `summary`, `description` (ADF), `issuetype`, `parent` per issue.
 4. Emit `WorkItem[]` + a tree index.
 
@@ -170,7 +177,10 @@ User clicks Compare
  → compare-worker (≤900s):
      1. Jira extract  → snapshot J
      2. Confluence extract → snapshot C  (page versions recorded;
-        fan-out: one queue event per Feature page for the 100–1,000 item envelope)
+        fan-out: one queue event per Feature page for the 100–1,000 item envelope when
+        rootLevel: initiative — CR-001, ADR-004. feature/epic-root pairs have a single
+        page, so there's no page-level fan-out; extraction is one fetch and any
+        batching happens at the item level, same as the enrich step below)
      3. Diff(J, C) → DriftReport (item-level, field-level)
      4. Persist snapshots + report to KVS (chunked if large)
      5. Push one enrich event per drifted item (or small batches) to enrich-queue
@@ -184,7 +194,9 @@ the Async Events API, and means a slow or down LLM never blocks drift review.
 
 ## 7. HIL review board (Custom UI)
 
-- Tree-grouped drift cards: Initiative → Feature → Epic → Story/Task.
+- Tree-grouped drift cards, rendered from the pair's configured root down (CR-001, ADR-004): an
+  Initiative-root pair shows Initiative → Feature → Epic → Story/Task; a Feature-root pair shows
+  Feature → Epic → Story/Task; an Epic-root pair shows Epic → Story/Task.
 - Per card: side-by-side Jira vs Confluence values, changed fields highlighted, drift status badge.
 - Direction control: `Jira → Confluence` / `Confluence → Jira` / `Skip` (defaults per §4 table).
 - LLM suggestion panel per field: original vs suggested, **Accept / Edit / Reject**. Accepted or
@@ -193,7 +205,10 @@ the Async Events API, and means a slow or down LLM never blocks drift review.
 - "Sync" builds an immutable `SyncPlan` (item, direction, final field values, target locators,
   expected page versions), stores it, and enqueues it. Sync-worker executes with per-item results;
   UI shows a completion report; audit entry written per mutation
-  (`who, when, item, direction, before-hash, after-hash`).
+  (`who, when, item, direction, before-hash, after-hash`). Feature-root and Epic-root pairs have no
+  page-relocation actions in this report — there's no Feature-page tier to relocate a `MOVED` item
+  across or create a page under (Q5, CR-001); a move there is just an in-page table edit like any
+  other field change.
 
 ## 8. LLM layer
 
@@ -298,7 +313,7 @@ This is where most Forge apps quietly become single-tenant. Hard rules:
 | Q3 | **`Type` column added** to the Stories/Tasks table (`Story` \| `Task`, mapped via hierarchy config). Required for new rows; validated against the mapped issue types. | Table convention + scaffold action updated; `KEY_CONFLICT` raised if Type contradicts an existing key's issue type. |
 | Q4 | **Forge LLMs API is the primary provider** (§8). Zero egress, Runs on Atlassian preserved, Atlassian-hosted Claude. Copilot/Rovo seats ruled out as runtime engines; `NullProvider` fallback retained; direct Anthropic API optional escape hatch. | `llm` manifest module; no `external.fetch` permissions; LLM cost sits with the developer under Forge consumption pricing. |
 | Q5 | **Moves are fully in scope, including page management.** A `MOVED` Epic sync relocates the Epic row *and all descendant Story/Task rows* to the target Feature's page; if the target Feature has no page yet, the sync-worker **creates the Feature page** under the Initiative root using the standard scaffold. **Applies only when `rootLevel: initiative`** (CR-001, ADR-004) — `feature`- and `epic`-root pairs have no Feature-page tier to relocate rows across or create pages under; a `MOVED` row there is just an in-page table edit. | Sync-worker gains `createFeaturePage` + `relocateRows` operations; both audited; multi-page writes sequenced with per-page version checks (partial completion is reported, never silent). |
-| Q6 | **Scale envelope: 100–1,000 items per initiative.** | Extraction fans out per Feature page (one queue event per page) rather than one monolithic pass; drift reports chunked in KVS; enrichment batched (~10 items/LLM call) to bound cost and latency at the top of the range. |
+| Q6 | **Scale envelope: 100–1,000 items per pair.** | For `rootLevel: initiative`, extraction fans out per Feature page (one queue event per page) rather than one monolithic pass; `feature`/`epic`-root pairs have a single page, so extraction is one fetch (CR-001, ADR-004). Drift reports chunked in KVS; enrichment batched (~10 items/LLM call) to bound cost and latency at the top of the range, regardless of root level. |
 | Q7 | **No page locking.** Optimistic concurrency only: page versions captured at compare, re-checked at sync; moved versions mark items `STALE` and exclude them from the plan. | Confirmed as designed (§5.3, §11). |
 
 ## 14. Phase plan (maps to documentation strategy + prompts)
