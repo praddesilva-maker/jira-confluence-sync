@@ -49,6 +49,12 @@ Phase 0 — Repo + docs skeleton + Forge scaffold. DoD: `docs/delivery/phase-pla
   original Phase 1 plan; see `prompts/phase-1-config.md` amendment in this same PR).
 - ADR-003: Forge LLMs API as primary LLM provider (accepted; renumbered from this phase's original
   prompt, which called it ADR-002 — see PR description for the numbering fix).
+- **CR-001 / ADR-004** (docs-only, no code yet): hierarchy root is now configurable per pair
+  (`initiative | feature | epic`, CR-001), reversing Q1's hard Jira Premium assumption — `epic` is
+  the minimum and needs no Premium levels. Reverses `docs/design/solution-architecture.md` §13 Q1
+  in place (marked "Reversed", not deleted, per the ADR append-only convention). `prompts/phase-1-
+  config.md` and `docs/delivery/phase-plan.md` (Phases 1–2) are already updated for this — Phase 1
+  implementation isn't started yet, so there's no code drift to reconcile.
 
 ## How to run
 
