@@ -4,7 +4,7 @@ starting. Phase 0 is complete. Implement Phase 1: configuration.
 GOAL
 A user can (a) choose a hierarchy root level per pair (initiative | feature | epic —
 CR-001, ADR-004) and map only the roles at/below that root to real issue types on
-their site, (b) register one or more initiative pairs
+their site, (b) register one or more pairs
 {confluencePageUrl, jiraRootKey, rootLevel}, with validation, persisted in Forge
 KVS — fully portable, nothing hardcoded, and usable on non-Premium tiers via an
 epic-root pair.
@@ -27,14 +27,15 @@ TASKS
      throws.
    - listPairs(), deletePair(id), getConfig().
 3. Domain: define the TypeScript types from the architecture data model (ItemType,
-   WorkItem, locators, HierarchyMapping, InitiativePair — InitiativePair carries
-   rootLevel: 'initiative' | 'feature' | 'epic') in src/domain/model.ts — frontend
-   and backend both import from here.
+   WorkItem, locators, HierarchyMapping, PairConfig — renamed from the earlier
+   working name InitiativePair since a pair's root isn't always an Initiative;
+   PairConfig carries rootLevel: 'initiative' | 'feature' | 'epic') in
+   src/domain/model.ts — frontend and backend both import from here.
 4. Frontend (static/review-ui): a Config screen with two panels — Hierarchy Mapping
    (a root-level selector plus selects only for the roles at/below it, populated
-   from getHierarchyOptions) and Initiative Pairs (list, add — including the
-   per-pair root-level choice — with inline validation errors, delete with
-   confirm). Use Atlaskit components. Plain, clean, no styling heroics.
+   from getHierarchyOptions) and Pairs (list, add — including the per-pair
+   root-level choice — with inline validation errors, delete with confirm). Use
+   Atlaskit components. Plain, clean, no styling heroics.
 5. Tests: Vitest units for URL→pageId parsing (pretty URLs, /pages/<id>/, trailing
    slashes, wrong-site URLs → error) and for mapping validation, with cases for all
    three root levels (initiative, feature, epic) — including that an epic-root

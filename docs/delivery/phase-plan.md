@@ -23,8 +23,8 @@ only when its checklist is fully ticked (`docs/documentation-strategy.md` §5).
 - [ ] `saveHierarchyMapping()` resolver: validates only the roles at/below the pair's `rootLevel` are mapped, each to a distinct type (CR-001, ADR-004), persists to `config:global`
 - [ ] `savePair()` resolver: pair includes `rootLevel` (`initiative | feature | epic`); URL→pageId parsing (pretty + `/pages/<id>/`), page existence check, `jiraRootKey`/type validation against the mapped type for that `rootLevel` (not always "initiative"), persists to `config:pair:<id>`, typed validation errors (no throws)
 - [ ] `listPairs()`, `deletePair()`, `getConfig()` resolvers
-- [ ] `src/domain/model.ts`: `ItemType`, `WorkItem`, locators, `HierarchyMapping`, `InitiativePair` (with `rootLevel`) — shared frontend/backend
-- [ ] Config screen UI: Hierarchy Mapping panel (root-level selector + selects only for roles at/below it) + Initiative Pairs panel (list/add — incl. per-pair root-level choice — /delete, inline validation), Atlaskit components
+- [ ] `src/domain/model.ts`: `ItemType`, `WorkItem`, locators, `HierarchyMapping`, `PairConfig` (renamed from `InitiativePair`, with `rootLevel`) — shared frontend/backend
+- [ ] Config screen UI: Hierarchy Mapping panel (root-level selector + selects only for roles at/below it) + Pairs panel (list/add — incl. per-pair root-level choice — /delete, inline validation), Atlaskit components
 - [ ] Vitest units: URL→pageId parsing edge cases, mapping validation for all three root levels (`initiative`, `feature`, `epic`), incl. rejecting an out-of-scope role for a given root — `@forge/api` mocked, no real API calls in tests
 - [ ] `docs/design/data-model.md` updated with implemented types + KVS key layout
 - [ ] `docs/STATE.md` updated; this checklist ticked; manual test script added to `docs/delivery/test-notes.md#phase-1`, including an epic-root pair validated on a free-tier site (CR-001)
