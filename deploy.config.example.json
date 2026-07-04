@@ -1,0 +1,16 @@
+{
+  "environments": {
+    "development": {
+      "sites": [
+        {
+          "name": "prad-personal",
+          "url": "https://pradeep-de-silva.atlassian.net",
+          "products": ["jira", "confluence"]
+        }
+      ]
+    },
+    "production": {
+      "sites": []
+    }
+  }
+}
