@@ -1,0 +1,40 @@
+# CLAUDE.md — standing orders for initiative-sync
+
+Initiative Sync is a Forge app that diffs a Jira Initiative hierarchy against a Confluence page
+tree, proposes LLM-assisted content improvements, and syncs only after human review — a diff/merge
+engine, never an auto-sync bot. Full design: `docs/design/solution-architecture.md`.
+
+**Read `docs/STATE.md` before doing anything.** It is the single source of truth for what phase
+we're in, what works, and what the next steps are.
+
+## Hard rules
+
+1. **Runtime LLM is the Forge LLMs API only**, via the `llm` manifest module. Never add
+   `external.fetch` egress permissions or call an outside LLM provider without first writing an ADR
+   that the user has approved. See ADR-003.
+2. **Never regenerate whole ADF documents.** All Confluence/Jira description writes are surgical
+   node-level edits at a recorded locator (page/table/row/cell). Everything outside the target node
+   is byte-preserved. See `docs/design/adf-conventions.md` and solution-architecture.md §5.3.
+
+## Tech constraints
+
+- Forge platform limits: resolvers must return within ~25s (thin: validate/enqueue/read-state
+  only); real work happens in queue consumers (`timeoutSeconds: 900`).
+- Node version pinned in `.nvmrc`; TypeScript strict mode everywhere.
+- `asUser()` for all product (Jira/Confluence) reads and writes; `asApp()` is reserved for internal
+  housekeeping only (see ADR-002).
+- No hardcoded issue type names, project keys, space keys, custom field IDs, or cloud IDs —
+  everything comes from config or is discovered at runtime (portability, solution-architecture §9).
+
+## Workflow rules
+
+- Small commits, conventional-commit messages (`feat:`, `fix:`, `docs:`, `chore:`, `test:`).
+- Update `docs/STATE.md` and the relevant design doc in the **same PR** as any behaviour change.
+- Add/extend Vitest tests for all domain logic (diff engine, ADF parsing, validation — pure
+  functions, heavily tested).
+- Never touch `docs/adr/` without being asked.
+- Ask before adding scopes to `manifest.yml`.
+
+## Definition of done for any task
+
+Code + tests green + docs updated + `docs/STATE.md` current.

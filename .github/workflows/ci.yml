@@ -1,0 +1,57 @@
+name: ci
+
+on:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install backend deps
+        run: npm ci
+
+      - name: Install frontend deps
+        run: npm ci --prefix static/review-ui
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm run test
+
+  # Deploys to the Forge staging environment on every push to main. Disabled until
+  # FORGE_API_TOKEN is added as a repo secret — see README "Enabling staging deploy".
+  #
+  # deploy:
+  #   needs: build
+  #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version-file: '.nvmrc'
+  #
+  #     - name: Install backend deps
+  #       run: npm ci
+  #
+  #     - name: Install frontend deps
+  #       run: npm ci --prefix static/review-ui
+  #
+  #     - name: Build frontend
+  #       run: npm run build
+  #
+  #     - name: Deploy to staging
+  #       run: npx forge deploy -e staging
+  #       env:
+  #         FORGE_API_TOKEN: ${{ secrets.FORGE_API_TOKEN }}

@@ -30,9 +30,10 @@ TASKS
    slashes, wrong-site URLs → error) and for mapping validation. Mock @forge/api —
    do not call real APIs in tests.
 6. Docs, same PR: update docs/design/data-model.md with the implemented types and KVS
-   key layout; write ADR-002 (asUser identity model — permission fidelity, audit
-   trail, portability); update STATE.md; tick Phase 1 DoD items; add a manual test
-   script to docs/delivery/test-notes.md#phase-1 that I'll run against
+   key layout; confirm ADR-002 (asUser identity model, written in Phase 0) still
+   reflects the implementation, amending only if Phase 1 revealed a deviation;
+   update STATE.md; tick Phase 1 DoD items; add a manual test script to
+   docs/delivery/test-notes.md#phase-1 that I'll run against
    pradeep-de-silva.atlassian.net using project ADT.
 
 CONSTRAINTS
