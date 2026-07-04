@@ -13,8 +13,11 @@ only when its checklist is fully ticked (`docs/documentation-strategy.md` §5).
 - [x] Docs skeleton created (`STATE.md`, design stubs, ADR-000 template, delivery docs, sessions dir)
 - [x] ADR-001 (Custom UI global page), ADR-002 (asUser identity), ADR-003 (Forge LLMs API provider)
 - [x] Vitest wired with one passing sample test; ESLint + Prettier clean; npm scripts dev/build/test/lint/typecheck
-- [x] GitHub Actions `ci` on pull_request (install, lint, typecheck, test); commented-out staging deploy job
+- [x] GitHub Actions `ci` on pull_request (install, lint, typecheck, test); commented-out production deploy job
 - [ ] Manual verification: `forge register` + `forge deploy` + `forge install` completed by the user on `pradeep-de-silva.atlassian.net`, global page confirmed loading with a live `ping()` result
+- [x] *(retro, CR-002)* Node 22.22.x pinned three ways: `.nvmrc`, `package.json` `engines` + `.npmrc` `engine-strict=true`, `scripts/check-node.mjs` — ADR-005
+- [x] *(retro, CR-002)* Cross-platform deploy tooling (`scripts/deploy.mjs`, `scripts/check-node.mjs`, `scripts/lib/*`) — Node `.mjs` only, no OS-specific shell scripts — ADR-005
+- [x] *(retro, CR-002)* Zero-client-credential deployment model documented and enforced (`deploy.config.json`/`.env` gitignored, example files committed, README "Deploying"/"Client onboarding") — ADR-006
 
 ## Phase 1 — Configuration: pair management, hierarchy mapping
 
@@ -72,6 +75,10 @@ only when its checklist is fully ticked (`docs/documentation-strategy.md` §5).
 
 - [ ] "Create/repair page scaffold" action (self-installing page convention, §5.2)
 - [ ] Error UX pass across config/compare/review/sync flows
-- [ ] Multi-site install runbook (README)
+- [ ] Multi-site install + client onboarding walkthrough executed against **at least two**
+  distinct Atlassian sites using `scripts/deploy.mjs` (CR-002, ADR-005/ADR-006) — one exercising
+  the operator-has-admin path, one exercising the installation-link path (README "Client
+  onboarding"); README's "Deploying"/"Client onboarding" sections corrected against anything the
+  walkthrough reveals
 - [ ] Demo data / seed script for a fresh site
 - [ ] `docs/STATE.md` updated; checklist ticked; phase marked DONE
