@@ -4,7 +4,7 @@ Seven phases, drafted from `docs/design/solution-architecture.md` §14. Each pha
 on `pradeep-de-silva.atlassian.net` and demoed against a copy of the ADT project. A phase is DONE
 only when its checklist is fully ticked (`docs/documentation-strategy.md` §5).
 
-## Phase 0 — Repo + docs skeleton + Forge scaffold ⟵ CURRENT
+## Phase 0 — Repo + docs skeleton + Forge scaffold ⟵ DONE
 
 - [x] Forge app scaffolded: Custom UI `jira:globalPage`, TypeScript strict, `storage:app` scope only
 - [x] One resolver (`ping`) wired end-to-end from Custom UI → resolver → response
@@ -14,23 +14,31 @@ only when its checklist is fully ticked (`docs/documentation-strategy.md` §5).
 - [x] ADR-001 (Custom UI global page), ADR-002 (asUser identity), ADR-003 (Forge LLMs API provider)
 - [x] Vitest wired with one passing sample test; ESLint + Prettier clean; npm scripts dev/build/test/lint/typecheck
 - [x] GitHub Actions `ci` on pull_request (install, lint, typecheck, test); commented-out production deploy job
-- [ ] Manual verification: `forge register` + `forge deploy` + `forge install` completed by the user on `pradeep-de-silva.atlassian.net`, global page confirmed loading with a live `ping()` result
+- [x] Manual verification: `forge register` + `forge deploy` + `forge install` completed by the user on `pradeep-de-silva.atlassian.net`, global page confirmed loading with a live `ping()` result
 - [x] *(retro, CR-002)* Node 22.22.x pinned three ways: `.nvmrc`, `package.json` `engines` + `.npmrc` `engine-strict=true`, `scripts/check-node.mjs` — ADR-005
 - [x] *(retro, CR-002)* Cross-platform deploy tooling (`scripts/deploy.mjs`, `scripts/check-node.mjs`, `scripts/lib/*`) — Node `.mjs` only, no OS-specific shell scripts — ADR-005
 - [x] *(retro, CR-002)* Zero-client-credential deployment model documented and enforced (`deploy.config.json`/`.env` gitignored, example files committed, README "Deploying"/"Client onboarding") — ADR-006
 
-## Phase 1 — Configuration: pair management, hierarchy mapping
+## Phase 1 — Configuration: pair management, hierarchy mapping ⟵ CURRENT
 
-- [ ] Manifest scopes added: `read:jira-work`, `read:page:confluence`
-- [ ] `getHierarchyOptions()` resolver: site issue types grouped by hierarchy level
-- [ ] `saveHierarchyMapping()` resolver: validates only the roles at/below the pair's `rootLevel` are mapped, each to a distinct type (CR-001, ADR-004), persists to `config:global`
-- [ ] `savePair()` resolver: pair includes `rootLevel` (`initiative | feature | epic`); URL→pageId parsing (pretty + `/pages/<id>/`), page existence check, `jiraRootKey`/type validation against the mapped type for that `rootLevel` (not always "initiative"), persists to `config:pair:<id>`, typed validation errors (no throws)
-- [ ] `listPairs()`, `deletePair()`, `getConfig()` resolvers
-- [ ] `src/domain/model.ts`: `ItemType`, `WorkItem`, locators, `HierarchyMapping`, `PairConfig` (renamed from `InitiativePair`, with `rootLevel`) — shared frontend/backend
-- [ ] Config screen UI: Hierarchy Mapping panel (root-level selector + selects only for roles at/below it) + Pairs panel (list/add — incl. per-pair root-level choice — /delete, inline validation), Atlaskit components
-- [ ] Vitest units: URL→pageId parsing edge cases, mapping validation for all three root levels (`initiative`, `feature`, `epic`), incl. rejecting an out-of-scope role for a given root — `@forge/api` mocked, no real API calls in tests
-- [ ] `docs/design/data-model.md` updated with implemented types + KVS key layout
-- [ ] `docs/STATE.md` updated; this checklist ticked; manual test script added to `docs/delivery/test-notes.md#phase-1`, including an epic-root pair validated on a free-tier site (CR-001)
+Design refined during implementation: the hierarchy mapping is **one site-global config** (not
+per-pair-conditional), and a pair's `rootLevel` is checked for *coverage* against it. See
+`docs/design/data-model.md`.
+
+- [x] Manifest scopes added: `read:jira-work`, `read:page:confluence`
+- [x] `getHierarchyOptions()` resolver: site issue types grouped by hierarchy role (via Jira `hierarchyLevel`; levels above Epic legitimately empty on Standard/Free — valid data, not an error)
+- [x] `saveHierarchyMapping()` resolver: validates the mapping is a contiguous run down to Story/Task, each role a distinct issue type (CR-001, ADR-004), persists to `config:global` — does **not** take a `rootLevel` argument (mapping is site-global)
+- [x] `savePair()` resolver: pair includes `rootLevel` (`initiative | feature | epic`); validates in order — (a) coverage: mapping covers this `rootLevel`, (b) URL→pageId parsing (pretty + `/pages/<id>/`) + page existence check, (c) `jiraRootKey`/type validation against the mapped type for that `rootLevel` (not always "initiative") — persists to `config:pair:<id>`, typed validation errors (no throws)
+- [x] `listPairs()`, `deletePair()`, `getConfig()` resolvers
+- [x] `src/domain/model.ts`: `ItemType`, `RootLevel`, `WorkItem`, locators, `HierarchyMapping(Input)`, `PairConfig`, `HierarchyOption(sByRole)` — shared frontend/backend
+- [x] Mapping-contiguity (`validateHierarchyMapping`) and pair-coverage (`checkPairCoverage`) validation as pure functions in `src/domain/hierarchy.ts`
+- [x] Config screen UI: Hierarchy Mapping panel (select per role, unavailable roles disabled) + Pairs panel (list/add — root-level choice limited to what the mapping covers — /delete, inline validation), Atlaskit components
+- [x] Vitest units: URL→pageId parsing edge cases (7 tests), mapping contiguity for all three shapes + gaps + duplicate types (9 tests), pair coverage for all three root levels incl. rejection under insufficient mapping (5 tests) — no real API calls, pure domain functions only
+- [x] `docs/design/data-model.md` updated with implemented types, mapping-contiguity + pair-coverage rules, and KVS key layout
+- [x] `docs/design/solution-architecture.md` §9 point 1 and the Q1 design-impact note updated to match the as-built (global mapping + coverage) model, per the `CLAUDE.md` staleness standing order
+- [x] ADR-002 (`asUser()` identity) confirmed against the implementation — no amendment needed. ADR-004's "Hierarchy mapping becomes conditional" line is now stale but was **not** edited (never touch `docs/adr/` without being asked) — flagged in the PR description instead
+- [x] `docs/STATE.md` updated; this checklist ticked
+- [ ] Manual test scripts run against a live site (`docs/delivery/test-notes.md#phase-1`): full four-level config where the site's tier supports it, plus an epic-root pair end-to-end including the coverage-rejection case
 
 ## Phase 2 — Read-only extraction: Jira tree + Confluence ADF parse → canonical model
 
