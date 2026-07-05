@@ -1,64 +1,62 @@
 # Project State — initiative-sync
 
-_Last updated: 2026-07-05 (post-session-01 + CR-001 + CR-002, all merged to `main`)_
+_Last updated: 2026-07-05 (Phase 1 implementation)_
 
 ## Current phase
 
-Phase 0 — Repo + docs skeleton + Forge scaffold. **Code complete and merged to `main`** (PRs #1,
-#2, #4 all merged). DoD: `docs/delivery/phase-plan.md#phase-0` — one checkbox remains: live-site
-verification, which is **OUTSTANDING** (nothing has been deployed or installed to a real
-Atlassian site yet). See "In flight / next steps" below.
+Phase 1 — Configuration: pair management, hierarchy mapping. DoD:
+`docs/delivery/phase-plan.md#phase-1`. Phase 0 is DONE — live-site verification passed (global
+page confirmed rendering on `pradeep-de-silva.atlassian.net`). Phase 1 code is complete in this PR;
+**live-site verification for Phase 1 is still outstanding** — see "In flight / next steps".
 
 ## What works right now
 
-All of the below is merged to `main` and verified locally (typecheck/lint/test/build all green on
-`main` directly, not just in CI) — **none of it has been exercised against a live Atlassian site
-yet.**
-
-- Forge scaffold: `manifest.yml` declares `jira:globalPage` (Custom UI), one `resolver-func`
-  function, `storage:app` scope only. App registered (`forge register`) to the `praddesilva-dev`
-  Developer Space; real `app.id` is in `manifest.yml`. `forge lint` passes with **no issues**.
-- Backend: `src/resolvers/ping.ts` (pure function) + `src/resolvers/index.ts` (Forge `Resolver`
-  wiring). Unit-tested (`ping.test.ts` ✔). Handler path in `manifest.yml` is
-  `resolvers/index.handler` — Forge always resolves function handlers relative to an implicit
-  `src/` root, so the manifest path must **omit** the `src/` prefix (learned the hard way: `index.
-  handler` and `src/resolvers/index.handler` both failed `forge lint` with "cannot find associated
-  file").
-- Frontend: `static/review-ui` (React 18 + Vite, `@forge/bridge`) renders "Initiative Sync —
-  Phase 0" and calls `invoke('ping')`, showing the live response. `npm run build` produces
-  `static/review-ui/dist` matching the manifest's resource path.
-- Tooling: Vitest (22 passing tests across `src/` + `scripts/lib/`), ESLint 9 flat config +
-  Prettier (root + `static/review-ui`, both clean), `npm run {dev,build,test,lint,typecheck}` at
-  root.
-- CI: `.github/workflows/ci.yml` runs `check:node`/install/lint/typecheck/test on every PR.
-  Production deploy job is present but commented out (needs `FORGE_EMAIL`/`FORGE_API_TOKEN`
-  secrets and a `deploy.config.json` strategy — see README).
-- **Deploy tooling (CR-002, ADR-005, ADR-006):** `scripts/deploy.mjs` + `scripts/check-node.mjs`,
-  both plain Node `.mjs` (no `.sh`/`.ps1`/`.bat` anywhere). Node 22.22.x pinned three ways
-  (`.nvmrc`, `package.json` `engines` + `.npmrc` `engine-strict`, `scripts/check-node.mjs`).
-  `deploy.config.example.json`/`.env.example` committed; the real `deploy.config.json`/`.env` are
-  gitignored (verified: `git check-ignore` confirms both, no secrets in any committed file).
-  `npm run deploy:dev` / `deploy:prod` — the latter requires typed `"production"` confirmation
-  unless `--yes`. Zero-client-credential model: only the operator's own Forge CLI token is ever
-  used; client sites get either automated install (operator has admin) or an installation link
-  (operator doesn't) — see README "Client onboarding".
+- **Phase 0** (scaffold, deploy tooling): DONE, verified on `pradeep-de-silva.atlassian.net`.
+  `jira:globalPage` Custom UI + `ping` resolver, `scripts/deploy.mjs`/`check-node.mjs`, CI. See
+  `docs/sessions/` and prior decisions below for the full history.
+- **Phase 1 (this PR), code complete, not yet live-verified:**
+  - Manifest scopes added: `read:jira-work`, `read:page:confluence` (`storage:app` already
+    present). No write scopes yet.
+  - Domain layer (`src/domain/`): `model.ts` (types — `ItemType`, `RootLevel`,
+    `HierarchyMapping(Input)`, `PairConfig`, `HierarchyOption(sByRole)`, plus the not-yet-consumed
+    `WorkItem`/locator types from the architecture doc), `hierarchy.ts`
+    (`validateHierarchyMapping`, `checkPairCoverage` — pure functions), `confluence-url.ts`
+    (`parseConfluencePageUrl` — pure function). See `docs/design/data-model.md` for the exact
+    contiguity/coverage rules.
+  - Resolvers (`src/resolvers/config.ts`, all `asUser()`): `getHierarchyOptions` (groups the
+    site's issue types by role via Jira's `hierarchyLevel` — assumes level 2 = Feature, level 3 =
+    Initiative when present, a simplifying assumption for this project's fixed 4-role model, noted
+    in code), `saveHierarchyMapping`, `savePair` (coverage → URL parse/page-exists → issue
+    type-match, in that order, typed errors not throws), `listPairs`, `deletePair`, `getConfig`.
+  - Frontend (`static/review-ui/src/{ConfigScreen,HierarchyMappingPanel,PairsPanel}.tsx`):
+    Hierarchy Mapping panel (Atlaskit `Select` per role, disabled + labelled "Not available on
+    this site" for roles with no options) and Pairs panel (root-level choice limited to what the
+    saved mapping currently covers, add/delete, inline error messages). Added Atlaskit `select`,
+    `button` (new API, `@atlaskit/button/new`), `textfield`, `section-message`, `spinner`.
+  - Tests: 43 total (21 new — 14 for mapping contiguity/coverage, 7 for URL parsing), all pure
+    domain-layer unit tests per `CLAUDE.md`; no resolver-level tests (out of this phase's explicit
+    test scope, which named URL parsing + mapping/coverage validation only).
+  - `npm run typecheck` / `lint` / `test` / `build` all green, `forge lint` clean, locally — **none
+    of Phase 1 has been exercised against a live Atlassian site yet.**
+- Tooling/CI/deploy tooling from Phase 0 + CR-002 unchanged and still green (`check:node`,
+  ESLint 9, Prettier, `scripts/deploy.mjs`).
 
 ## In flight / next 1–3 steps
 
-PRs #1, #2, #4 are all merged to `main`. The only thing left before Phase 1 starts is **live-site
-verification — nothing has been deployed or installed anywhere yet.** Next steps, exactly:
+Phase 1 code is complete on this PR's branch (`phase-1/config`), not yet merged. Once merged,
+**live-site verification is the only remaining item.**
 
-1. **You** create `deploy.config.json` and `.env` from the committed examples
-   (`cp deploy.config.example.json deploy.config.json` and `cp .env.example .env`, then fill in
-   your site and Forge CLI credentials — see README "Deploying").
-2. **You** run `npm run check:node`, then `npm run deploy:dev`.
-3. **You** confirm the "Initiative Sync — Phase 0" global page renders on
-   `pradeep-de-silva.atlassian.net`, showing the live `ping()` result (full script:
-   `docs/delivery/test-notes.md#phase-0`).
-
-Once (3) passes: tick the last Phase 0 DoD checkbox in `docs/delivery/phase-plan.md`, then (not
-before) tag the baseline release and start Phase 1 with `prompts/phase-1-config.md`. No code
-blockers — Phase 1 can start as soon as (3) is confirmed working.
+1. Merge the "Phase 1: configuration & hierarchy mapping" PR.
+2. **You** run `npm run deploy:dev` (deploys the new scopes + resolvers + Config screen).
+   Re-approving scopes may prompt on first install after the manifest scope change — expected.
+3. **You** run the manual test scripts in `docs/delivery/test-notes.md#phase-1`:
+   (a) full four-level mapping + an `initiative`-root pair against
+   `pradeep-de-silva.atlassian.net` project ADT (where the site's tier supports it), and
+   (b) an `epic`-root pair end-to-end (works regardless of tier — `epic` is the floor), including
+   deliberately attempting a `feature`-root pair under an `epic`-only mapping and confirming the
+   friendly `ROOT_LEVEL_NOT_COVERED` error appears instead of a raw failure.
+4. Once (3) passes: tick the Phase 1 DoD checklist in `docs/delivery/phase-plan.md`, then start
+   Phase 2 (read-only extraction) — no code blockers.
 
 ## Known issues / parked
 
@@ -76,9 +74,8 @@ blockers — Phase 1 can start as soon as (3) is confirmed working.
 - **CR-001 / ADR-004** (docs-only, no code yet): hierarchy root is now configurable per pair
   (`initiative | feature | epic`, CR-001), reversing Q1's hard Jira Premium assumption — `epic` is
   the minimum and needs no Premium levels. Reverses `docs/design/solution-architecture.md` §13 Q1
-  in place (marked "Reversed", not deleted, per the ADR append-only convention). `prompts/phase-1-
-  config.md` and `docs/delivery/phase-plan.md` (Phases 1–2) are already updated for this — Phase 1
-  implementation isn't started yet, so there's no code drift to reconcile.
+  in place (marked "Reversed", not deleted, per the ADR append-only convention). Now implemented in
+  Phase 1 — see below.
 - **CR-002 / ADR-005 / ADR-006** (`scripts/`, no `manifest.yml` or app runtime changes): real
   deploy/install tooling. ADR-005: all tooling is plain Node `.mjs` invoked via `npm run`, never
   OS-specific shell scripts — Windows and Mac/Linux operators run the same commands. ADR-006: zero
@@ -98,6 +95,15 @@ blockers — Phase 1 can start as soon as (3) is confirmed working.
   Same recovery repeated for PR #4. **Lesson, now in `CLAUDE.md`:** for stacked PRs, always
   explicitly retarget the child PR's base before deleting the parent branch — never rely on
   GitHub's auto-retarget.
+- **Phase 1 implements CR-001/ADR-004** with one refinement over the original ADR-004 text: the
+  hierarchy mapping is **one site-global config** (not per-pair-conditional as ADR-004's
+  Consequences section describes) — a pair's `rootLevel` is checked for *coverage* against that one
+  mapping instead. See `docs/design/data-model.md` for the rule and `solution-architecture.md` §9
+  point 1 (updated in this PR per the `CLAUDE.md` staleness standing order). **ADR-004 itself was
+  not edited** (never touch `docs/adr/` without being asked) — its "Hierarchy mapping becomes
+  conditional" line is now stale and should be corrected if/when the user asks for an ADR-004
+  amendment or a new ADR. ADR-002 (`asUser()` identity) was confirmed against the implementation —
+  every product call in `src/resolvers/config.ts` uses `asUser()`; no amendment needed.
 
 ## How to run
 
@@ -105,4 +111,6 @@ blockers — Phase 1 can start as soon as (3) is confirmed working.
 / `npm run test` / `npm run build` at the repo root (`npm run check:node` verifies you're on
 22.22.x first — all of the above assume that). For live verification: `cp
 deploy.config.example.json deploy.config.json` (fill in your site), then `npm run deploy:dev`, per
-`docs/delivery/test-notes.md#phase-0`. Test site: `pradeep-de-silva.atlassian.net`.
+`docs/delivery/test-notes.md#phase-0` (Phase 0) and `#phase-1` (this phase). Test site:
+`pradeep-de-silva.atlassian.net`, project ADT — full four-level mapping where the site's tier
+supports it, an epic-root pair otherwise.
