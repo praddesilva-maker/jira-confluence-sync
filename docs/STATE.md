@@ -30,17 +30,27 @@ Phase 0 — Repo + docs skeleton + Forge scaffold. DoD: `docs/delivery/phase-pla
 
 ## In flight / next 1–3 steps
 
-1. **You** run `forge deploy` (development environment) then `forge install` targeting
-   `pradeep-de-silva.atlassian.net`, and confirm the global page loads per
-   `docs/delivery/test-notes.md#phase-0`. `forge login` and `forge register` are already done;
-   `forge lint` passes clean.
-2. Once confirmed, tick the last Phase 0 DoD checkbox in `docs/delivery/phase-plan.md` and start
-   Phase 1 with `prompts/phase-1-config.md`.
-3. No code blockers — Phase 1 can start as soon as (1) is confirmed working.
+1. **Merge PR #1** (`phase-0/scaffold` → `main`, "Phase 0: scaffold + docs skeleton").
+2. **Merge PR #2** (`cr-001/configurable-root`, "CR-001: configurable hierarchy root (docs)")
+   after it auto-retargets to `main` once #1 merges — it currently targets `phase-0/scaffold`
+   because the docs it edits only existed there.
+3. **Run Phase 0 manual verification:**
+   ```bash
+   npx --package=@forge/cli forge deploy    # development environment
+   npx --package=@forge/cli forge install   # target pradeep-de-silva.atlassian.net
+   ```
+   Then confirm the global page renders on `pradeep-de-silva.atlassian.net` per
+   `docs/delivery/test-notes.md#phase-0` (`forge login`/`forge register` are already done;
+   `forge lint` passes clean). Once confirmed, tick the last Phase 0 DoD checkbox in
+   `docs/delivery/phase-plan.md` and start Phase 1 with `prompts/phase-1-config.md`.
+
+No code blockers — Phase 1 can start as soon as (3) is confirmed working.
 
 ## Known issues / parked
 
-- None currently open for Phase 0.
+- [#3](https://github.com/praddesilva-maker/jira-confluence-sync/issues/3): GitHub Actions
+  deprecation warning (`actions/checkout@v4`/`actions/setup-node@v4` forced onto Node 24). Not
+  blocking — CI still passes — parked for a future workflow bump.
 
 ## Decisions since last architecture update
 
@@ -49,6 +59,12 @@ Phase 0 — Repo + docs skeleton + Forge scaffold. DoD: `docs/delivery/phase-pla
   original Phase 1 plan; see `prompts/phase-1-config.md` amendment in this same PR).
 - ADR-003: Forge LLMs API as primary LLM provider (accepted; renumbered from this phase's original
   prompt, which called it ADR-002 — see PR description for the numbering fix).
+- **CR-001 / ADR-004** (docs-only, no code yet): hierarchy root is now configurable per pair
+  (`initiative | feature | epic`, CR-001), reversing Q1's hard Jira Premium assumption — `epic` is
+  the minimum and needs no Premium levels. Reverses `docs/design/solution-architecture.md` §13 Q1
+  in place (marked "Reversed", not deleted, per the ADR append-only convention). `prompts/phase-1-
+  config.md` and `docs/delivery/phase-plan.md` (Phases 1–2) are already updated for this — Phase 1
+  implementation isn't started yet, so there's no code drift to reconcile.
 
 ## How to run
 

@@ -1,7 +1,9 @@
 # Data Model — initiative-sync
 
 Skeleton. Populated in Phase 1 (`config:global`, `config:pair:<id>`, `HierarchyMapping`,
-`InitiativePair`) and Phase 2 (`WorkItem`, locators, drift statuses as implemented).
+`PairConfig` — renamed from the earlier working name `InitiativePair` since CR-001/ADR-004 made a
+pair's root configurable and not always an Initiative) and Phase 2 (`WorkItem`, locators, drift
+statuses as implemented).
 
 Canonical shapes are defined in `docs/design/solution-architecture.md` §4 and implemented in
 `src/domain/model.ts` once that module exists (Phase 1). This doc should describe the *as-built*
