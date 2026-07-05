@@ -6,4 +6,5 @@ static/review-ui/dist/
 .DS_Store
 .env
 .env.local
+deploy.config.json
 coverage/

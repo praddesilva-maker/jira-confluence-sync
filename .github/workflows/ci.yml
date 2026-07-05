@@ -13,6 +13,9 @@ jobs:
         with:
           node-version-file: '.nvmrc'
 
+      - name: Check Node version
+        run: npm run check:node
+
       - name: Install backend deps
         run: npm ci
 
@@ -28,8 +31,11 @@ jobs:
       - name: Test
         run: npm run test
 
-  # Deploys to the Forge staging environment on every push to main. Disabled until
-  # FORGE_API_TOKEN is added as a repo secret — see README "Enabling staging deploy".
+  # Deploys + installs to the Forge production environment on every push to main,
+  # via scripts/deploy.mjs (--yes skips the typed "production" confirmation prompt,
+  # which only makes sense interactively). Disabled until FORGE_EMAIL and
+  # FORGE_API_TOKEN are added as repo secrets, and deploy.config.json is present
+  # (it's gitignored — see README "Enabling production deploy" and "Deploying").
   #
   # deploy:
   #   needs: build
@@ -42,6 +48,9 @@ jobs:
   #       with:
   #         node-version-file: '.nvmrc'
   #
+  #     - name: Check Node version
+  #       run: npm run check:node
+  #
   #     - name: Install backend deps
   #       run: npm ci
   #
@@ -51,7 +60,8 @@ jobs:
   #     - name: Build frontend
   #       run: npm run build
   #
-  #     - name: Deploy to staging
-  #       run: npx forge deploy -e staging
+  #     - name: Deploy + install to production
+  #       run: node scripts/deploy.mjs --env production --yes
   #       env:
+  #         FORGE_EMAIL: ${{ secrets.FORGE_EMAIL }}
   #         FORGE_API_TOKEN: ${{ secrets.FORGE_API_TOKEN }}

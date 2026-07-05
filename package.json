@@ -2,7 +2,10 @@
   "name": "initiative-sync",
   "version": "0.0.0",
   "private": true,
-  "description": "Forge app: drift detection and human-in-the-loop sync between a Jira Initiative hierarchy and a Confluence page tree.",
+  "description": "Forge app: drift detection and human-in-the-loop sync between a configurable-root Jira hierarchy and a Confluence page tree.",
+  "engines": {
+    "node": "22.22.x"
+  },
   "dependencies": {
     "@forge/resolver": "^1.6.9"
   },
@@ -11,13 +14,17 @@
     "build": "npm --prefix static/review-ui run build",
     "test": "vitest run",
     "lint": "eslint . && npm --prefix static/review-ui run lint",
-    "typecheck": "tsc --noEmit -p tsconfig.json && npm --prefix static/review-ui run typecheck"
+    "typecheck": "tsc --noEmit -p tsconfig.json && npm --prefix static/review-ui run typecheck",
+    "check:node": "node scripts/check-node.mjs",
+    "deploy:dev": "node scripts/deploy.mjs --env development",
+    "deploy:prod": "node scripts/deploy.mjs --env production"
   },
   "devDependencies": {
     "@eslint/js": "^9.15.0",
     "@types/node": "^22.10.0",
     "eslint": "^9.15.0",
     "eslint-config-prettier": "^9.1.0",
+    "globals": "^15.12.0",
     "prettier": "^3.3.3",
     "typescript": "^5.6.3",
     "typescript-eslint": "^8.15.0",
