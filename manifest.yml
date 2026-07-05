@@ -22,3 +22,5 @@ app:
 permissions:
   scopes:
     - storage:app
+    - read:jira-work
+    - read:page:confluence
