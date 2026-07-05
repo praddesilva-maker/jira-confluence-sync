@@ -252,10 +252,15 @@ This is where most Forge apps quietly become single-tenant. Hard rules:
 1. **No hardcoded issue type names or IDs.** "Initiative" and "Feature" are Premium custom
    hierarchy levels whose names differ per site. Config step includes a **hierarchy mapping**
    screen: the app reads the site's issue types + hierarchy levels and the user maps each role to a
-   concrete issue type. Since CR-001/ADR-004, mapping is **conditional on the pair's `rootLevel`**:
-   only roles at or below the chosen root need mapping (an `epic`-root pair maps just `epic`,
-   `story`, `task`; a `feature`-root pair adds `feature`; only an `initiative`-root pair needs all
-   four, and Premium is required only in that case). Stored per installation.
+   concrete issue type. As implemented in Phase 1, the mapping is **one site-global config**, not
+   one per pair: it must be a contiguous run of roles down through the always-together leaf pair
+   (Story, Task) — `epic/story/task`, `feature/epic/story/task`, or
+   `initiative/feature/epic/story/task`. A pair then chooses a `rootLevel`, which is only accepted
+   if the *current* mapping covers it (`epic` is always covered; `feature`/`initiative` require
+   that role to be mapped) — rejected with a friendly "mapping does not cover this root level"
+   error otherwise, not a silent failure. Premium is required only once the mapping actually
+   extends to `feature`/`initiative`. See `docs/design/data-model.md` for the exact rules and the
+   pure functions implementing them (`src/domain/hierarchy.ts`). Stored per installation.
 2. **No hardcoded project keys, space keys, custom field IDs, or cloud IDs.** Everything from
    config or discovered at runtime.
 3. `asUser()` everywhere user-facing → the app inherits each client's permission scheme instead of
@@ -308,7 +313,7 @@ This is where most Forge apps quietly become single-tenant. Hard rules:
 
 | # | Decision | Design impact |
 |---|---|---|
-| Q1 | **Reversed by CR-001, ADR-004.** Hierarchy root is **configurable per pair**: `rootLevel` is one of `initiative \| feature \| epic`, chosen by the user per initiative pair. `epic` is the minimum and works on every Jira tier (Free/Standard/Premium); `initiative`/`feature` roots still require Premium's extra hierarchy levels. No hard Premium prerequisite anymore. | Hierarchy mapping (Phase 1) becomes conditional on `rootLevel` — only maps roles at/below the chosen root; validates the site exposes the levels the chosen root needs and errors clearly if not. Confluence page model varies by root (§5.2). Enables end-to-end testing on a free/personal-tier site. |
+| Q1 | **Reversed by CR-001, ADR-004.** Hierarchy root is **configurable per pair**: `rootLevel` is one of `initiative \| feature \| epic`, chosen by the user per initiative pair. `epic` is the minimum and works on every Jira tier (Free/Standard/Premium); `initiative`/`feature` roots still require Premium's extra hierarchy levels. No hard Premium prerequisite anymore. | **As built in Phase 1:** one site-global hierarchy mapping (contiguous run down to Story/Task), plus a per-pair coverage check against `rootLevel` — see §9 point 1 and `docs/design/data-model.md`. Confluence page model varies by root (§5.2). Enables end-to-end testing on a free/personal-tier site. |
 | Q2 | **Option (a).** Synced descriptions restricted to a supported ADF node allowlist (paragraph, text + marks, lists, code, simple links). Richer nodes (panels, media, expands, macros) flag the item `MANUAL_REVIEW` — never silently mangled. | Allowlist lives in `docs/design/adf-conventions.md`; validator in the domain layer. |
 | Q3 | **`Type` column added** to the Stories/Tasks table (`Story` \| `Task`, mapped via hierarchy config). Required for new rows; validated against the mapped issue types. | Table convention + scaffold action updated; `KEY_CONFLICT` raised if Type contradicts an existing key's issue type. |
 | Q4 | **Forge LLMs API is the primary provider** (§8). Zero egress, Runs on Atlassian preserved, Atlassian-hosted Claude. Copilot/Rovo seats ruled out as runtime engines; `NullProvider` fallback retained; direct Anthropic API optional escape hatch. | `llm` manifest module; no `external.fetch` permissions; LLM cost sits with the developer under Forge consumption pricing. |
