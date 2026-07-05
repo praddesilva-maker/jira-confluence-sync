@@ -1,18 +1,23 @@
 # Project State — initiative-sync
 
-_Last updated: 2026-07-05 (post-session-01, CR-002 — no formal session-start/-end cycle run for
-this change)_
+_Last updated: 2026-07-05 (post-session-01 + CR-001 + CR-002, all merged to `main`)_
 
 ## Current phase
 
-Phase 0 — Repo + docs skeleton + Forge scaffold. DoD: `docs/delivery/phase-plan.md#phase-0`
+Phase 0 — Repo + docs skeleton + Forge scaffold. **Code complete and merged to `main`** (PRs #1,
+#2, #4 all merged). DoD: `docs/delivery/phase-plan.md#phase-0` — one checkbox remains: live-site
+verification, which is **OUTSTANDING** (nothing has been deployed or installed to a real
+Atlassian site yet). See "In flight / next steps" below.
 
 ## What works right now
 
+All of the below is merged to `main` and verified locally (typecheck/lint/test/build all green on
+`main` directly, not just in CI) — **none of it has been exercised against a live Atlassian site
+yet.**
+
 - Forge scaffold: `manifest.yml` declares `jira:globalPage` (Custom UI), one `resolver-func`
   function, `storage:app` scope only. App registered (`forge register`) to the `praddesilva-dev`
-  Developer Space; real `app.id` is in `manifest.yml`. `forge lint` passes with **no issues**
-  (verified after registration, with the user logged in).
+  Developer Space; real `app.id` is in `manifest.yml`. `forge lint` passes with **no issues**.
 - Backend: `src/resolvers/ping.ts` (pure function) + `src/resolvers/index.ts` (Forge `Resolver`
   wiring). Unit-tested (`ping.test.ts` ✔). Handler path in `manifest.yml` is
   `resolvers/index.handler` — Forge always resolves function handlers relative to an implicit
@@ -21,9 +26,7 @@ Phase 0 — Repo + docs skeleton + Forge scaffold. DoD: `docs/delivery/phase-pla
   file").
 - Frontend: `static/review-ui` (React 18 + Vite, `@forge/bridge`) renders "Initiative Sync —
   Phase 0" and calls `invoke('ping')`, showing the live response. `npm run build` produces
-  `static/review-ui/dist` matching the manifest's resource path. Verified locally end-to-end
-  (typecheck, lint, test, build all pass) — **not yet verified against a live Atlassian site**,
-  since this session had no Atlassian credentials.
+  `static/review-ui/dist` matching the manifest's resource path.
 - Tooling: Vitest (22 passing tests across `src/` + `scripts/lib/`), ESLint 9 flat config +
   Prettier (root + `static/review-ui`, both clean), `npm run {dev,build,test,lint,typecheck}` at
   root.
@@ -38,33 +41,24 @@ Phase 0 — Repo + docs skeleton + Forge scaffold. DoD: `docs/delivery/phase-pla
   `npm run deploy:dev` / `deploy:prod` — the latter requires typed `"production"` confirmation
   unless `--yes`. Zero-client-credential model: only the operator's own Forge CLI token is ever
   used; client sites get either automated install (operator has admin) or an installation link
-  (operator doesn't) — see README "Client onboarding". Not yet run against a live site by a human
-  — like the rest of Phase 0, this needs manual verification.
+  (operator doesn't) — see README "Client onboarding".
 
 ## In flight / next 1–3 steps
 
-1. **Merge PR #1** (`phase-0/scaffold` → `main`, "Phase 0: scaffold + docs skeleton").
-2. **Merge PR #2** (`cr-001/configurable-root`, "CR-001: configurable hierarchy root (docs)")
-   after it auto-retargets to `main` once #1 merges — it currently targets `phase-0/scaffold`
-   because the docs it edits only existed there.
-3. **Merge PR #4** (`cr-002/deploy-tooling`, "CR-002: deploy tooling + environment config") after
-   it auto-retargets to `main` once #2 merges — same reason, it branches off `cr-001/configurable-
-   root`. (Numbered #4, not #3 — [issue #3](https://github.com/praddesilva-maker/jira-confluence-sync/issues/3)
-   took that number first.)
-4. **Run Phase 0 manual verification**, either directly or via the new tooling:
-   ```bash
-   cp deploy.config.example.json deploy.config.json   # fill in your site — see README "Deploying"
-   npm run deploy:dev
-   # — or, equivalently, the pre-CR-002 direct commands —
-   npx --package=@forge/cli forge deploy    # development environment
-   npx --package=@forge/cli forge install   # target pradeep-de-silva.atlassian.net
-   ```
-   Then confirm the global page renders on `pradeep-de-silva.atlassian.net` per
-   `docs/delivery/test-notes.md#phase-0` (`forge login`/`forge register` are already done;
-   `forge lint` passes clean). Once confirmed, tick the last Phase 0 DoD checkbox in
-   `docs/delivery/phase-plan.md` and start Phase 1 with `prompts/phase-1-config.md`.
+PRs #1, #2, #4 are all merged to `main`. The only thing left before Phase 1 starts is **live-site
+verification — nothing has been deployed or installed anywhere yet.** Next steps, exactly:
 
-No code blockers — Phase 1 can start as soon as (4) is confirmed working.
+1. **You** create `deploy.config.json` and `.env` from the committed examples
+   (`cp deploy.config.example.json deploy.config.json` and `cp .env.example .env`, then fill in
+   your site and Forge CLI credentials — see README "Deploying").
+2. **You** run `npm run check:node`, then `npm run deploy:dev`.
+3. **You** confirm the "Initiative Sync — Phase 0" global page renders on
+   `pradeep-de-silva.atlassian.net`, showing the live `ping()` result (full script:
+   `docs/delivery/test-notes.md#phase-0`).
+
+Once (3) passes: tick the last Phase 0 DoD checkbox in `docs/delivery/phase-plan.md`, then (not
+before) tag the baseline release and start Phase 1 with `prompts/phase-1-config.md`. No code
+blockers — Phase 1 can start as soon as (3) is confirmed working.
 
 ## Known issues / parked
 
@@ -93,6 +87,17 @@ No code blockers — Phase 1 can start as soon as (4) is confirmed working.
   scopes approved once at install, via either an automated install (operator has admin) or an
   installation link (operator doesn't). `deploy.config.json`/`.env` are real-config, gitignored,
   with committed `.example` templates.
+- **Merge-day incident and lesson:** squash-merging PR #1 broke the git ancestry that PR #2 (and
+  transitively PR #4) relied on — GitHub computes a PR's diff/mergeability from the merge-base with
+  its target branch, and a squash merge creates a new commit with no ancestry link to the original
+  branch's individual commits. Deleting the now-merged parent branch to trigger GitHub's
+  auto-retarget instead **auto-closed** the child PR (it didn't retarget as expected). Recovered by:
+  temporarily restoring the deleted branch to allow reopening the PR, explicitly setting its base
+  to `main` via the API, then merging `origin/main` into the branch (an ordinary merge commit, not
+  a rebase — no force-push) to give it correct ancestry before re-verifying the diff and re-merging.
+  Same recovery repeated for PR #4. **Lesson, now in `CLAUDE.md`:** for stacked PRs, always
+  explicitly retarget the child PR's base before deleting the parent branch — never rely on
+  GitHub's auto-retarget.
 
 ## How to run
 

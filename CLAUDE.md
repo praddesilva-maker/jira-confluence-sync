@@ -41,6 +41,8 @@ we're in, what works, and what the next steps are.
 - Ask before adding scopes to `manifest.yml`.
 - When a change reverses or generalises a design decision, the same PR must sweep the affected doc
   for now-stale statements — flagging is acceptable only for changes that require code to resolve.
+- For stacked PRs, always explicitly retarget the child PR's base before deleting the parent
+  branch — never rely on GitHub's auto-retarget.
 
 ## Definition of done for any task
 
